@@ -14,6 +14,9 @@ public class task_5_2 {
         double[][] C = task_utils.generateRandomMatrix(n);
         double[][] C_inv = task_utils.invertMatrix(C);
         double[][] A = task_utils.multiplyMatrix(task_utils.multiplyMatrix(C_inv, Gamma), C);
+        
+        System.out.println("Матрица Gamma:");
+        task_utils.printMatrix(Gamma);
 
         System.out.println("Матрица A:");
         task_utils.printMatrix(A);

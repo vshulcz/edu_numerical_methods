@@ -5,14 +5,17 @@ import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 
 public class task_5_3 {
-    private static final double EPSILON = 1e-8;
+    private static final double EPSILON = 1e-9;
 
     public static void main(String[] args) {
-        int n = 100;
+        int n = 3;
         double[][] Gamma = task_utils.generateRandomDiagonalMatrix(n);
         double[][] C = task_utils.generateRandomMatrix(n);
         double[][] C_inv = task_utils.invertMatrix(C);
         double[][] A = task_utils.multiplyMatrix(task_utils.multiplyMatrix(C_inv, Gamma), C);
+
+        System.out.println("Матрица Gamma:");
+        task_utils.printMatrix(Gamma);
 
         System.out.println("Матрица A:");
         task_utils.printMatrix(A);
@@ -21,8 +24,7 @@ public class task_5_3 {
         System.out.println("Матрица Хезенберга:");
         task_utils.printMatrix(A);
 
-        RealMatrix H = new Array2DRowRealMatrix(A);
-        double[] eigenvalues = qrAlgorithmWithShifts(H);
+        double[] eigenvalues = qrAlgorithmWithShifts(A);
 
         System.out.println("Собственные значения матрицы A:");
         for (double eigenvalue : eigenvalues) {
@@ -75,50 +77,41 @@ public class task_5_3 {
         return A;
     }
 
-    public static double[] qrAlgorithmWithShifts(RealMatrix A) {
-        int n = A.getRowDimension();
+    public static double[] qrAlgorithmWithShifts(double[][] matrix) {
+        int n = matrix.length;
         double[] eigenvalues = new double[n];
-        RealMatrix ak = A.copy();
-        double mu;
+        Array2DRowRealMatrix H = new Array2DRowRealMatrix(matrix);
 
-        int eigenIndex = n - 1;
+        int iter = 0;
+        while (n > 1) {
+            double shift = H.getEntry(n - 1, n - 1);
+            shiftMatrix(H, -shift, n);
 
-        while (n > 0) {
-            int k = 0;
-            while (true) {
-                if (n <= 1) {
-                    eigenvalues[eigenIndex] = ak.getEntry(n - 1, n - 1);
-                    eigenIndex--;
-                    break;
-                }
+            QRDecomposition qr = new QRDecomposition(H.getSubMatrix(0, n - 1, 0, n - 1));
+            RealMatrix Q = qr.getQ();
+            RealMatrix R = qr.getR();
+            H.setSubMatrix(R.multiply(Q).getData(), 0, 0);
 
-                mu = ak.getEntry(n - 1, n - 1);
-                ak = shiftMatrix(ak, -mu, n);
-                QRDecomposition qr = new QRDecomposition(ak);
-                RealMatrix Q = qr.getQ();
-                RealMatrix R = qr.getR();
-                ak = R.multiply(Q);
+            addShift(H, shift, n);
 
-                addShift(ak, mu, n);
-
-                if (k > 0 && Math.abs(ak.getEntry(n - 1, n - 2)) < EPSILON) {
-                    eigenvalues[eigenIndex] = ak.getEntry(n - 1, n - 1);
-                    eigenIndex--;
-                    n--;
-                    break;
-                }
-                k++;
+            if (Math.abs(H.getEntry(n - 1, n - 2)) < EPSILON) {
+                eigenvalues[n - 1] = H.getEntry(n - 1, n - 1);
+                n--;
             }
-            if (n <= 1) {
-                if (n == 1) {
-                    eigenvalues[eigenIndex] = ak.getEntry(0, 0);
-                }
+
+            iter++;
+            if (iter > 1000)
                 break;
-            }
         }
+
+        if (n == 1) {
+            eigenvalues[0] = H.getEntry(0, 0);
+        }
+
         return eigenvalues;
     }
 
+    // LEGACY (DOESN'T WORK)
     public static void qrDecomposition(double[][] A, double[][] Q, double[][] R, int n) {
         int i, j, k;
         double c, s;
@@ -164,11 +157,9 @@ public class task_5_3 {
         }
     }
 
-    private static RealMatrix shiftMatrix(RealMatrix matrix, double shift, int n) {
-        RealMatrix shiftedMatrix = matrix.copy();
+    private static void shiftMatrix(RealMatrix matrix, double shift, int n) {
         for (int i = 0; i < n; i++) {
-            shiftedMatrix.addToEntry(i, i, shift);
+            matrix.addToEntry(i, i, shift);
         }
-        return shiftedMatrix;
     }
 }

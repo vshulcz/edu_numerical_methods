@@ -4,12 +4,15 @@ import java.util.Random;
 
 public class task_5_1 {
     public static void main(String[] args) {
-        int n = 2000;
+        int n = 3;
 
         double[][] Gamma = task_utils.generateRandomDiagonalMatrix(n);
         double[][] C = task_utils.generateRandomMatrix(n);
         double[][] C_inv = task_utils.invertMatrix(C);
         double[][] A = task_utils.multiplyMatrix(task_utils.multiplyMatrix(C_inv, Gamma), C);
+
+        System.out.println("Матрица Gamma:");
+        task_utils.printMatrix(Gamma);
 
         System.out.println("Матрица A:");
         task_utils.printMatrix(A);
